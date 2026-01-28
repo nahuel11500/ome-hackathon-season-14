@@ -1,30 +1,61 @@
 services:
 
-  trainer:
+  # API Gateway - Main orchestration service
+  api-gateway:
     build:
       context: ./
-      dockerfile: train/Dockerfile
-    volumes:
-      - "./models:/app/models:rw"
-    
-  inference:
-    build:
-      context: ./
-      dockerfile: inference/Dockerfile
-    volumes:
-      - "./models:/app/models:ro"
-      - "./output:/app/output:rw"
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
     environment:
       POSTGRES_USER: user
       POSTGRES_DB: ome_hackathon
       POSTGRES_PASSWORD: ilovedataforgood
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      SENTIMENT_SERVICE_URL: http://sentiment-service:8001
+      NER_SERVICE_URL: http://ner-service:8002
+      KEYWORDS_SERVICE_URL: http://keywords-service:8003
     depends_on:
       - postgres
+      - sentiment-service
+      - ner-service
+      - keywords-service
+    networks:
+      - metanet1
+    volumes:
+      - "./data:/app/data:ro"
+
+  # Sentiment Analysis Microservice
+  sentiment-service:
+    build:
+      context: ./
+      dockerfile: sentiment/Dockerfile
+    expose:
+      - "8001"
     networks:
       - metanet1
 
+  # NER Microservice
+  ner-service:
+    build:
+      context: ./
+      dockerfile: ner/Dockerfile
+    expose:
+      - "8002"
+    networks:
+      - metanet1
+
+  # Keywords Extraction Microservice
+  keywords-service:
+    build:
+      context: ./
+      dockerfile: key-words/Dockerfile
+    expose:
+      - "8003"
+    networks:
+      - metanet1
+    
   postgres:
     image: postgres:15
     ports:
@@ -32,7 +63,7 @@ services:
     volumes:
       - './pgdata:/var/lib/postgresql/data' 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U user -d ome_hackathon"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -43,33 +74,6 @@ services:
       POSTGRES_PASSWORD: ilovedataforgood
     logging: # 
       driver: none
-    networks:
-      - metanet1
-  metabase:
-    image: metabase/metabase:latest
-    # If on Apple Silicon use this image instead
-    # image: stephaneturquay/metabase-arm64:latest
-    volumes:
-      - './mb-data:/metabase-data'  # Volumes where Metabase data will be persisted
-    ports:
-      - 3000:3000
-    healthcheck:
-      test: curl --fail -I http://localhost:3000/api/health || exit 1
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    environment:
-      MB_DB_TYPE: postgres
-      MB_DB_DBNAME: ome_hackathon
-      MB_DB_PORT: 5432
-      MB_DB_USER: user
-      MB_DB_PASS: ilovedataforgood
-      MB_DB_HOST: postgres
-      MB_DB_FILE: "/metabase-data/metabase.db" # https://www.metabase.com/docs/latest/operations-guide/running-metabase-on-docker.html#mounting-a-mapped-file-storage-volume
-      JAVA_TIMEZONE: Europe/Paris
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - metanet1
 

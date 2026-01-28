@@ -11,7 +11,7 @@ def connect_to_db(
     database: str = os.environ.get("POSTGRES_DB", "barometre"),
     user: str = os.environ.get("POSTGRES_USER", "user"),
     host: str = os.environ.get("POSTGRES_HOST", "localhost"),
-    port: int = os.environ.get("POSTGRES_PORT", 5432),
+    port: int = int(os.environ.get("POSTGRES_PORT", "5432")),
     password: str = os.environ.get("POSTGRES_PASSWORD", "password"),
 ):
     """
@@ -44,7 +44,7 @@ def connect_to_db(
     return engine
 
 
-def get_db_session(engine: Engine = None) -> Session:
+def get_db_session(engine: Engine | None = None) -> Session:
     """
     Create a session for interacting with the database using the provided engine.
 

@@ -1,30 +1,18 @@
 import hashlib
-import json
-import os
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from database_connection import connect_to_db
-from logs import get_logger
+from api.database.database_connection import connect_to_db
+from api.database.logs import get_logger
 from sqlalchemy import (
-    ARRAY,
-    JSON,
-    BigInteger,
-    Boolean,
     Column,
     DateTime,
     Double,
-    ForeignKey,
-    Integer,
-    MetaData,
-    PrimaryKeyConstraint,
     String,
-    Table,
     Text,
-    Uuid,
 )
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.postgresql import ARRAY, insert as pg_insert
 from sqlalchemy.orm import Session, declarative_base
 from sqlalchemy.orm.decl_api import DeclarativeMeta
 
@@ -46,6 +34,21 @@ class CategoryClassifications(Base):
     report_text = Column(Text)
     llm_category = Column(Text)
     predicted_category = Column(Text)
+    agricultural_category = Column(
+        Text
+    )  # Agricultural discourse classification (productiviste/alternatif/neutre/autre)
+    sentiment = Column(Text)  # New: sentiment label (positive/negative/neutral)
+    sentiment_confidence = Column(Double)  # New: confidence score for sentiment
+    # NER fields
+    actor_persons = Column(ARRAY(Text))  # List of persons extracted by NER
+    actor_organizations = Column(ARRAY(Text))  # List of organizations extracted by NER
+    actor_locations = Column(ARRAY(Text))  # List of locations extracted by NER
+    actor_misc = Column(ARRAY(Text))  # List of misc entities extracted by NER
+    # Keywords fields
+    keywords_filtered = Column(
+        ARRAY(Text)
+    )  # List of filtered keywords extracted from text
+    keywords_nouns = Column(ARRAY(Text))  # List of nouns found in keywords
 
 
 class ClassificationMetrics(Base):

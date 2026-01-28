@@ -206,7 +206,21 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# Project specific
 models/*
-pgdata
-mb-data
-checkpoints
+pgdata/
+mb-data/
+checkpoints/
+
+# Data files
+data/*.parquet
+data/*.csv
+data/train_cached.parquet
+data/test_cached.parquet
+dataset/*.parquet
+dataset/*.csv
+*.parquet
+
+# Analysis outputs
+analysis/datasets/*.csv
+analysis/results/*
